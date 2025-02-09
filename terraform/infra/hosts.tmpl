@@ -1,0 +1,15 @@
+[kube_control_plane]
+%{~ for i in master-nods ~}
+
+${i["name"]} ansible_host=${coalesce(i["ext_ip"], i["int_ip"])} ip=${i["int_ip"]} etcd_member_name=etcd-${i["name"]}
+%{~ endfor ~}
+
+
+[etcd:children]
+kube_control_plane
+
+[kube_node]
+%{~ for i in worker-nods ~}
+
+${i["name"]} ansible_host=${coalesce(i["ext_ip"], i["int_ip"])} ip=${i["int_ip"]}
+%{~ endfor ~}

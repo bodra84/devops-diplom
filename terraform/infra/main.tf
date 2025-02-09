@@ -86,3 +86,29 @@ data "template_file" "cloudinit" {
     ssh_public_key = local.ssh_public_key
   }
 }
+
+# Получение информации о vm
+locals {
+  master_nodes = [for i in module.master-nod.vm_info: i]
+  worker_nodes = [for i in module.worker-nod.vm_info: i]
+}
+
+# Сохранение файла hosts.ini
+resource "null_resource" "vm_provision" {
+  depends_on = [
+    module.master-nod,
+    module.worker-nod
+  ]
+
+  provisioner "local-exec" {
+    command = <<-EOA
+    echo "${templatefile("./hosts.tmpl",
+    {master-nods = local.master_nodes,
+     worker-nods = local.worker_nodes,
+})}" > hosts.ini
+    EOA  
+}
+triggers = {
+  always_run = "${timestamp()}"
+}
+}

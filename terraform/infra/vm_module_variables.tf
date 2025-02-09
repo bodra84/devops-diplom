@@ -21,13 +21,13 @@ variable "compute_instance" {
       instance_name  = "worker-nod"
       instance_count = 2
       image_family   = "ubuntu-2404-lts-oslogin"
-      public_ip      = false
+      public_ip      = true
       label          = "worker"
       serial_port    = 1
       platform       = "standard-v3"
       core_fraction  = 20
       cores          = 2
-      memory         = 1
+      memory         = 2
       preemptible    = true
     },
     master-nod = {
