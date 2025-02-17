@@ -36,6 +36,7 @@ module "worker-nod" {
   instance_count         = var.compute_instance.worker-nod.instance_count
   image_family           = var.compute_instance.worker-nod.image_family
   public_ip              = var.compute_instance.worker-nod.public_ip
+  boot_disk_size         = var.compute_instance.worker-nod.disk_size
   platform               = var.compute_instance.worker-nod.platform
   instance_core_fraction = var.compute_instance.worker-nod.core_fraction
   instance_cores         = var.compute_instance.worker-nod.cores
@@ -63,6 +64,7 @@ module "master-nod" {
   instance_count         = var.compute_instance.master-nod.instance_count
   image_family           = var.compute_instance.master-nod.image_family
   public_ip              = var.compute_instance.master-nod.public_ip
+  boot_disk_size         = var.compute_instance.master-nod.disk_size
   platform               = var.compute_instance.master-nod.platform
   instance_core_fraction = var.compute_instance.master-nod.core_fraction
   instance_cores         = var.compute_instance.master-nod.cores

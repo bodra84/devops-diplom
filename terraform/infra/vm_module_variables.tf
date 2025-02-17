@@ -7,6 +7,7 @@ variable "compute_instance" {
     public_ip      = bool
     label          = string
     serial_port    = number
+    disk_size      = optional(number)
     platform       = optional(string)
     core_fraction  = optional(number)
     cores          = optional(number)
@@ -24,10 +25,11 @@ variable "compute_instance" {
       public_ip      = true
       label          = "worker"
       serial_port    = 1
+      disk_size      = 20
       platform       = "standard-v3"
       core_fraction  = 20
       cores          = 2
-      memory         = 2
+      memory         = 4
       preemptible    = true
     },
     master-nod = {
@@ -38,10 +40,11 @@ variable "compute_instance" {
       public_ip      = true
       label          = "master"
       serial_port    = 1
+      disk_size      = 20
       platform       = "standard-v3"
       core_fraction  = 20
       cores          = 2
-      memory         = 2
+      memory         = 4
       preemptible    = true
     },
     nat = {
@@ -52,6 +55,7 @@ variable "compute_instance" {
       public_ip      = true
       label          = "public"
       serial_port    = 1
+      disk_size      = 20
       platform       = "standard-v3"
       core_fraction  = 20
       cores          = 2
