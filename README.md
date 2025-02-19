@@ -5,14 +5,16 @@
 Дипломное задание находится по [ссылке](https://github.com/netology-code/devops-diplom-yandexcloud)  
 
 ### Подготовка к выполнению:
-Для выполения дипломной работы на рабочее место были установлены следующие приложения:  
+При выполении дипломной работы использовались следующие приложения:  
 | Наименование       | Версия       |
 |--------------------|--------------|
 | Ubuntu на WSL      | 22.04        | 
 | Visual Studio Code | 1.96.4       | 
 | Terraform          | v1.8.4       | 
 | Kubespray          | release-2.27 | 
+| Kubernetes         | v1.31.4      |
 | Docker             | ver. 27.3.1  |
+| kube-prometheus    | release-0.14 |
 
 ### Создание облачной инфраструктуры
 1. Управление инфраструктурой будет осуществляться сервисным аккаунтом с правами "editor", стейт файл будет храниться S3 bucket.
@@ -57,3 +59,12 @@
 ![Скриншот 9](img/9.png)  
 
 ### Подготовка cистемы мониторинга и деплой приложения
+1. Для деплоя в кластер системы мониторинга воспользуемся пакетом  [kube-prometheus](https://github.com/prometheus-operator/kube-prometheus).  
+Склонируем репозиторий `kube-prometheus`, переключимся на ветку release-0.14.   
+Далее выполним команду:  
+`kubectl apply --server-side -f manifests/setup`  
+`kubectl wait -for condition=Established --all CustomResourceDefinition --namespace=monitoring`  
+`kubectl apply -f manifests/`  
+
+Проверим:  
+![Скриншот 10](img/10.png)  
