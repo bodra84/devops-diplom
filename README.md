@@ -14,7 +14,7 @@
 | Kubespray          | release-2.27 | 
 | Kubernetes         | v1.31.4      |
 | Docker             | ver. 27.3.1  |
-| kube-prometheus    | release-0.14 |
+| Helm               | v.3.16.3     |
 
 ### Создание облачной инфраструктуры
 1. Управление инфраструктурой будет осуществляться сервисным аккаунтом с правами "editor", стейт файл будет храниться S3 bucket.
@@ -59,12 +59,21 @@
 ![Скриншот 9](img/9.png)  
 
 ### Подготовка cистемы мониторинга и деплой приложения
-1. Для деплоя в кластер системы мониторинга воспользуемся пакетом  [kube-prometheus](https://github.com/prometheus-operator/kube-prometheus).  
-Склонируем репозиторий `kube-prometheus`, переключимся на ветку release-0.14.   
-Далее выполним команду:  
-`kubectl apply --server-side -f manifests/setup`  
-`kubectl wait -for condition=Established --all CustomResourceDefinition --namespace=monitoring`  
-`kubectl apply -f manifests/`  
-
-Проверим:  
+1. Для деплоя в кластер системы мониторинга воспользуемся helm чартом kube-prometheus-stack из репозитария [prometheus-community](https://github.com/prometheus-community).  
+Добавим репозиторий командой:  
+`helm repo add prometheus-community https://prometheus-community.github.io/helm-charts`  
 ![Скриншот 10](img/10.png)  
+Обновим репозитарии:  
+`helm repo update`  
+Сохраним файл конфигурации:  
+`helm show values prometheus-community/kube-prometheus-stack > values.yml`  
+![Скриншот 11](img/11.png)  
+В файле изменим пароль администратора и параметры сервиса grafana.  
+![Скриншот 12](img/12.png)  
+![Скриншот 13](img/13.png)  
+Файл конфигурации находится по ссылке [values.yml](helm/values.yml)  
+
+Далее установим чарт применив файл конфигурации.  
+![Скриншот 14](img/14.png)   
+Проверим:  
+![Скриншот 15](img/15.png)  

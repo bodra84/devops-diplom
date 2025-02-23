@@ -93,6 +93,7 @@ data "template_file" "cloudinit" {
 locals {
   master_nodes = [for i in module.master-nod.vm_info: i]
   worker_nodes = [for i in module.worker-nod.vm_info: i]
+  all_vms = concat(module.worker-nod.vm_info, module.master-nod.vm_info)  
 }
 
 # Сохранение файла hosts.ini
@@ -113,4 +114,67 @@ resource "null_resource" "vm_provision" {
 triggers = {
   always_run = "${timestamp()}"
 }
+}
+
+# Создание target_group для nlb
+resource "yandex_lb_target_group" "all-vms" {
+  name      = "all-vms"
+  dynamic "target" {
+    for_each = local.all_vms
+    content {
+      subnet_id = target.value.subnet_id
+      address   = target.value.int_ip
+    }
+  }
+}
+
+# Создание nlb для мониторинга и приложения
+resource "yandex_lb_network_load_balancer" "nlb-monitoring" {
+  name = "my-nlb-monitoring"
+ 
+  listener {
+    name = var.nlb_listener.monitoring.name
+    port = var.nlb_listener.monitoring.port
+    target_port = var.nlb_listener.monitoring.target_port
+    external_address_spec {
+      ip_version = "ipv4"
+    }
+  }
+  
+  attached_target_group {
+    target_group_id = "${yandex_lb_target_group.all-vms.id}"
+
+    healthcheck {
+      name = var.nlb_listener.monitoring.name
+      tcp_options {
+        port = var.nlb_listener.monitoring.target_port
+      }
+    }
+  }  
+  depends_on = [yandex_lb_target_group.all-vms]
+}
+
+resource "yandex_lb_network_load_balancer" "nlb-app" {
+  name = "my-nlb-app"
+  
+  listener {
+    name = var.nlb_listener.app.name
+    port = var.nlb_listener.app.port
+    target_port = var.nlb_listener.app.target_port
+    external_address_spec {
+      ip_version = "ipv4"
+    }
+  }
+
+  attached_target_group {
+    target_group_id = "${yandex_lb_target_group.all-vms.id}"
+
+    healthcheck {
+      name = var.nlb_listener.app.name
+      tcp_options {
+        port = var.nlb_listener.app.target_port
+      }
+    }
+  }
+  depends_on = [yandex_lb_target_group.all-vms]
 }

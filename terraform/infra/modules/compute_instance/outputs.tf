@@ -3,5 +3,6 @@ output "vm_info" {
     name   = i["name"]
     ext_ip = i["network_interface"][0]["nat_ip_address"]
     int_ip = i["network_interface"][0]["ip_address"]
+    subnet_id = i["network_interface"][0]["subnet_id"]
   }]
 }
