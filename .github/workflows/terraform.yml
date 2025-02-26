@@ -3,7 +3,12 @@ on:
   push:
     branches:
       - main
-
+defaults:
+  run:
+    working-directory: ./terraform/infra
+env:
+  CLOUD_ID: ${{ secrets.CLOUD_ID }}
+  FOLDER_ID: ${{ secrets.FOLDER_ID }}
 jobs:
  terraform:
    runs-on: ubuntu-22.04
@@ -16,16 +21,39 @@ jobs:
      with:
        terraform_version: 1.8.4
 
+   - name: Add keys and mirror
+     run: |
+        - |
+          cat <<EOF > ~/.terraformrc
+          provider_installation {
+            network_mirror {
+              url = "https://terraform-mirror.yandexcloud.net/"
+              include = ["registry.terraform.io/*/*"]
+            }
+            direct {
+              exclude = ["registry.terraform.io/*/*"]
+            }
+            }
+            EOF
+        - echo ${{ secrets.YC_KEY1 }} > ./../S3_bucket_SA/.auth-key.json
+        - echo ${{ secrets.AWS2 }} > ./../S3_bucket_SA/.credentials
+        - cd terraform/infra
+
    - name: Terraform Init
      run: terraform init
 
    - name: Terraform Plan
-     run: terraform plan
+     run: terraform plan -out=tfplan
+     id: plan
+     continue-on-error: true
+   - name: Upload Plan Artifact
+     uses: actions/upload-artifact@v4
+     with:
+      name: terraform-plan
+      path: tfplan
     
-   - name: Terraform Apply
-     run: terraform apply -auto-approve
-     env:
-       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-       CLOUD_ID: ${{ secrets.CLOUD_ID }}
-       FOLDER_ID: ${{ secrets.FOLDER_ID }}
+  #  - name: Terraform Apply
+  #    run: terraform apply -auto-approve tfplan
+  #    env:
+  #      CLOUD_ID: ${{ secrets.CLOUD_ID }}
+  #      FOLDER_ID: ${{ secrets.FOLDER_ID }}
