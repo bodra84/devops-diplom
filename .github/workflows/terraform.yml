@@ -3,15 +3,44 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: 'Terraform apply'
+        type: boolean
+        default: false
+      destroy:
+        description: 'Terraform destroy'
+        type: boolean
+        default: false
+
 defaults:
   run:
     working-directory: ./terraform/infra
 env:
-  CLOUD_ID: ${{ secrets.CLOUD_ID }}
-  FOLDER_ID: ${{ secrets.FOLDER_ID }}
+  TF_VAR_cloud_id: ${{ secrets.CLOUD_ID }}
+  TF_VAR_folder_id: ${{ secrets.FOLDER_ID }}
+  YC_KEY: ${{ secrets.YC_KEY }}
+  AWS: ${{secrets.AWS }}
+  SSH_PUB: ${{ secrets.SSH_PUB }}
+
 jobs:
- terraform:
+ check_inputs:
    runs-on: ubuntu-22.04
+   if: github.event_name == 'workflow_dispatch'
+   steps:
+   - name: Check inputs
+     run: |
+       if [ "${{ github.event.inputs.apply }}" = "true" ] && [ "${{ github.event.inputs.destroy }}" = "true" ]; then
+         echo "Error! Both values cannot be true at the same time!"
+         exit 1
+       fi
+ terraform_apply:
+   runs-on: ubuntu-22.04
+   defaults:
+     run:
+       working-directory: ./terraform/infra
+
    steps:
    - name: Checkout Code
      uses: actions/checkout@v4
@@ -23,35 +52,38 @@ jobs:
 
    - name: Add keys and mirror
      run: |
-        - |
-          cat <<EOF > ~/.terraformrc
-          provider_installation {
-            network_mirror {
-              url = "https://terraform-mirror.yandexcloud.net/"
-              include = ["registry.terraform.io/*/*"]
-            }
-            direct {
-              exclude = ["registry.terraform.io/*/*"]
-            }
-            }
-            EOF
-        - echo ${{ secrets.YC_KEY1 }} > ./../S3_bucket_SA/.auth-key.json
-        - echo ${{ secrets.AWS2 }} > ./../S3_bucket_SA/.credentials
-        - cd terraform/infra
+        cat <<EOF > ~/.terraformrc
+        provider_installation {
+          network_mirror {
+            url = "https://terraform-mirror.yandexcloud.net/"
+            include = ["registry.terraform.io/*/*"]
+          }
+          direct {
+            exclude = ["registry.terraform.io/*/*"]
+          }
+        }
+        EOF
+        echo "${YC_KEY}" > ./../S3_bucket_SA/.auth-key.json
+        echo "${AWS}" > ./../S3_bucket_SA/.credentials
+        mkdir ~/.ssh && echo "${SSH_PUB}" > ~/.ssh/yandxcld.pub
 
    - name: Terraform Init
      run: terraform init
+
+   - name: Terraform Validate
+     run: terraform validate
 
    - name: Terraform Plan
      run: terraform plan -out=tfplan
      id: plan
      continue-on-error: true
+
    - name: Upload Plan Artifact
      uses: actions/upload-artifact@v4
      with:
-      name: terraform-plan
-      path: tfplan
-    
+      name: tfplan
+      path: terraform/infra/tfplan
+
   #  - name: Terraform Apply
   #    run: terraform apply -auto-approve tfplan
   #    env:
