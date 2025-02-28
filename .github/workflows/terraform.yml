@@ -78,12 +78,12 @@ jobs:
 
    - name: Terraform Apply (auto)
      if: github.event_name == 'push' && github.ref_name == 'main'
-     run: echo "Запуск (auto)" #terraform apply -auto-approve tfplan
+     run: terraform apply -auto-approve tfplan
     
    - name: Terraform Apply (manual)
      if: github.event_name == 'workflow_dispatch' && github.event.inputs.apply == 'true' && github.event.inputs.destroy == 'false'
-     run: echo "Запуск (manual)" #terraform apply -auto-approve tfplan
+     run: terraform apply -auto-approve tfplan
     
    - name: Terraform Destroy (manual)
      if: github.event_name == 'workflow_dispatch' && github.event.inputs.apply == 'true' && github.event.inputs.destroy == 'true'
-     run: echo "Удаление Destroy" #terraform destroy -auto-approve
+     run: terraform destroy -auto-approve

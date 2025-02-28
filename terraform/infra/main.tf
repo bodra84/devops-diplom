@@ -176,5 +176,5 @@ resource "yandex_lb_network_load_balancer" "nlb-app" {
       }
     }
   }
-  depends_on = [yandex_lb_target_group.all-vms]
+  depends_on = [yandex_lb_target_group.all-vms, yandex_lb_network_load_balancer.nlb-monitoring]
 }
