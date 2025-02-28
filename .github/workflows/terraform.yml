@@ -6,11 +6,11 @@ on:
   workflow_dispatch:
     inputs:
       apply:
-        description: 'Terraform apply'
+        description: 'terraform apply'
         type: boolean
         default: false
       destroy:
-        description: 'Terraform destroy'
+        description: '-destroy'
         type: boolean
         default: false
 
@@ -25,18 +25,8 @@ env:
   SSH_PUB: ${{ secrets.SSH_PUB }}
 
 jobs:
- check_inputs:
-   runs-on: ubuntu-22.04
-   if: github.event_name == 'workflow_dispatch'
-   steps:
-   - name: Check inputs
-     run: |
-       if [ "${{ github.event.inputs.apply }}" = "true" ] && [ "${{ github.event.inputs.destroy }}" = "true" ]; then
-         echo "Error! Both values cannot be true at the same time!"
-         exit 1
-       fi
  terraform_apply:
-   runs-on: ubuntu-22.04
+   runs-on: ubuntu-22.04   
    defaults:
      run:
        working-directory: ./terraform/infra
@@ -74,18 +64,26 @@ jobs:
      run: terraform validate
 
    - name: Terraform Plan
+     if: github.event_name == 'push' || github.event.inputs.destroy == 'false'
      run: terraform plan -out=tfplan
      id: plan
      continue-on-error: true
 
    - name: Upload Plan Artifact
+     if: github.event_name == 'push' || github.event.inputs.destroy == 'false'
      uses: actions/upload-artifact@v4
      with:
       name: tfplan
       path: terraform/infra/tfplan
 
-  #  - name: Terraform Apply
-  #    run: terraform apply -auto-approve tfplan
-  #    env:
-  #      CLOUD_ID: ${{ secrets.CLOUD_ID }}
-  #      FOLDER_ID: ${{ secrets.FOLDER_ID }}
+   - name: Terraform Apply (auto)
+     if: github.event_name == 'push' && github.ref_name == 'main'
+     run: echo "Запуск (auto)" #terraform apply -auto-approve tfplan
+    
+   - name: Terraform Apply (manual)
+     if: github.event_name == 'workflow_dispatch' && github.event.inputs.apply == 'true' && github.event.inputs.destroy == 'false'
+     run: echo "Запуск (manual)" #terraform apply -auto-approve tfplan
+    
+   - name: Terraform Destroy (manual)
+     if: github.event_name == 'workflow_dispatch' && github.event.inputs.apply == 'true' && github.event.inputs.destroy == 'true'
+     run: echo "Удаление Destroy" #terraform destroy -auto-approve
